@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context.xsd
+           http://www.springframework.org/schema/tx
+           http://www.springframework.org/schema/tx/spring-tx.xsd">
+    <!--读取类路径下的JDBC配置文件-->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <!--声明数据源-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"
+          init-method="init" destroy-method="close" >
+        <property name="driverClassName" value="${JDBC.Driver}"/>
+        <property name="url" value="${JDBC.url}"/>
+        <property name="username" value="${JDBC.root}"/>
+        <property name="password" value="${JDBC.password}"/>
+    </bean>
+
+    <!--声明SqlSessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="mapperLocations" value="classpath:cn/duan/dao/*.xml"/>
+    </bean>
+    <!--通过扫描器扫描dao包下的配置文件-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--指定sqlsessionFactory-->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+        <!--指定dao接口路径-->
+        <property name="basePackage" value="cn.duan.dao"/>
+    </bean>
+    <!--声明userService-->
+    <bean id="userService" class="cn.duan.services.impl.UserServicesImpl">
+        <property name="userDao" ref="userDao"/>
+    </bean>
+
+    <!--声明数据源事务管理器-->
+    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!--代表每个service都要经过事务的管理-->
+    <aop:config>
+        <aop:pointcut expression="execution(* dao.*.* (..))" id="txPointCut"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPointCut"/>
+    </aop:config>
+    <!--事务管理器-->
+    <tx:advice id="txAdvice" transaction-manager="txManager">
+        <!--配置事务属性-->
+        <tx:attributes>
+            <tx:method name="query*" propagation="REQUIRED"
+                       isolation="READ_COMMITTED" read-only="false" rollback-for="java.lang.Exception" timeout="-1"/>
+
+            <tx:method name="insert*" propagation="REQUIRED"
+                       isolation="READ_COMMITTED" read-only="false" rollback-for="java.lang.Exception" timeout="-1"/>
+        </tx:attributes>
+    </tx:advice>
+
+</beans>

@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.duan.dao.UserDao">
+
+    <select id="queryAll" parameterType="java.lang.String" resultType="cn.duan.domain.User">
+        select * from user;
+    </select>
+    <insert id="insertUser" parameterType="cn.duan.dao.UserDao">
+        insert into user values(#{name},#{pwd});
+    </insert>
+    <select id="findUser" parameterType="java.lang.String" resultType="cn.duan.domain.User">
+        select name from user where name = #{name};
+    </select>
+</mapper>
